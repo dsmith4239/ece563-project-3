@@ -109,7 +109,9 @@ void cache::run(unsigned num_entries){
         // tokenize the instruction
         char *op = strtok (str," ");
 	char *addr = strtok (NULL, " ");
-	address_t address = strtoul(addr, NULL, 16);
+	address_t address = strtoull(addr, NULL, 16); 
+	// provided code doesn't work. 
+	// address is > 4 bytes :| bro
 
 /* debug */
 	//cout << "ADDRESS:: @=0x" << hex << address << endl;
@@ -312,7 +314,7 @@ void cache::print_tag_array(){
 					//stringstream tag << "0x" << hex << current.tag;
 
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
-					cout << setfill(' ') << setw(7) << current.index << setw(6) << current.dirty << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
+					cout << setfill(' ') << setw(7) << dec << current.index << setw(6) << current.dirty << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}
 			}
 		}
@@ -322,7 +324,7 @@ void cache::print_tag_array(){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
 				if(current.tag != (unsigned)UNDEFINED){					
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
-					cout << setfill(' ') << setw(7) << current.index << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
+					cout << setfill(' ') << setw(7) << dec << current.index << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}
 			}
 		}
