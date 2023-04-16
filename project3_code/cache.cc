@@ -34,6 +34,7 @@ cache::cache(unsigned size,
 	write_misses = 0;
 	evictions = 0;
 	memory_writes = 0;
+	maccesstime = 0;
 
 	// sanity checks
 	c_num_sets = c_size / (c_line_size * c_associativity);
@@ -133,14 +134,24 @@ void cache::run(unsigned num_entries){
 
 void cache::print_statistics(){
 	cout << "STATISTICS" << endl;
-	/* edit here 
-	• Avg. memory access time = Hit time + Miss rate × Miss Penalty 
 
-	
-	*/
+	number_memory_accesses = c_accesses;
+	cout << "memory accesses = " << dec << number_memory_accesses << endl;
+
+	cout << "read = " << reads << endl;
+	cout << "read misses = " << read_misses << endl;
+	cout << "write = " << writes << endl;
+	cout << "write misses = " << write_misses << endl;
+	cout << "evictions = " << evictions << endl;
+	cout << "memory writes = " << memory_writes << endl;
+
+	// Avg. memory access time = Hit time + Miss rate × Miss Penalty 
+	maccesstime = c_hit_time + ((float)c_miss_penalty * (read_misses + write_misses) / number_memory_accesses);
+	cout << "average memory access time " << maccesstime << endl;	
 }
 
 access_type_t cache::read(address_t address){
+	reads++;
 	// split address into tag, index, block offset
 	unsigned index_width = log2(c_num_sets);
 	unsigned blockoffset_width = log2(c_line_size);
@@ -193,12 +204,14 @@ access_type_t cache::read(address_t address){
 		cache_sets.at(index).blocks.at(readblock).entry_access = c_accesses;
 		return HIT;
 	}
-	else{
+	else{ // miss
+		read_misses++;
 		if(next_free_block == (unsigned)UNDEFINED){
 			// eviction policy
 			// evict the block with value () out of all sets that has the
 			// lowest entry_access value
 			next_free_block = evict(index);
+			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1) memory_writes++;
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 0;
@@ -210,7 +223,7 @@ access_type_t cache::read(address_t address){
 }
 
 access_type_t cache::write(address_t address){
-   
+    writes++;
 	// split address into tag, index, block offset
 	unsigned index_width = log2(c_num_sets);
 	unsigned blockoffset_width = log2(c_line_size);
@@ -264,9 +277,11 @@ access_type_t cache::write(address_t address){
 		return HIT;
 	}
 	else{
+		write_misses++;
 		if(next_free_block == (unsigned)UNDEFINED){
 			// eviction policy - find LRU set index with block (index)
 			next_free_block = evict(index);
+			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1) memory_writes++;
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 1;	// dirty == 1 only if write back
@@ -292,8 +307,10 @@ void cache::print_tag_array(){
 			for(int sn = 0; sn < c_num_sets; sn++){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
 				if(current.tag != (unsigned)UNDEFINED){
+					//stringstream tag << "0x" << hex << current.tag;
+
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
-					cout << setfill(' ') << setw(7) << current.index << setw(6) << current.dirty << setw(4+tag_bits/4) << "0x" + (current.tag) << endl; 
+					cout << setfill(' ') << setw(7) << current.index << setw(6) << current.dirty << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}
 			}
 		}
@@ -302,8 +319,10 @@ void cache::print_tag_array(){
 			for(int sn = 0; sn < c_num_sets; sn++){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
 				if(current.tag != (unsigned)UNDEFINED){
+					string hexadec = "0x" + to_string(current.tag);
+					
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
-					cout << setfill(' ') << setw(7) << current.index << setw(4+tag_bits/4) << current.tag << endl; 
+					cout << setfill(' ') << setw(7) << current.index << "0x" << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}
 			}
 		}
@@ -321,6 +340,7 @@ void cache::print_tag_array(){
 unsigned cache::evict(unsigned index){
 	// find last recently used block in set (index)
 	// with lowest entry_access
+	evictions++;
 	unsigned access_number = (unsigned)UNDEFINED;
 	unsigned LRU = (unsigned)UNDEFINED;
 	for(int blocknum = 0; blocknum < c_blocks_per_set; blocknum++){

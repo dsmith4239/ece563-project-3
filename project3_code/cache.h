@@ -52,6 +52,7 @@ class cache{
 	unsigned write_misses;
 	unsigned evictions;
 	unsigned memory_writes;
+	float maccesstime;
 	/* trace file input stream */	
 	ifstream stream;
 
