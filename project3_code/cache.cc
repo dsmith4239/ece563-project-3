@@ -220,7 +220,7 @@ access_type_t cache::read(address_t address){
 
 access_type_t cache::write(address_t address){
     writes++;
-	if(c_wr_miss_policy == NO_WRITE_ALLOCATE && c_wr_hit_policy == WRITE_THROUGH) memory_writes++;
+	
 	// split address into tag, index, block offset
 	unsigned index_width = log2(c_num_sets);
 	unsigned blockoffset_width = log2(c_line_size);
@@ -273,10 +273,13 @@ access_type_t cache::write(address_t address){
 			cache_sets.at(index).blocks.at(writeblock).dirty = 1;
 			cache_sets.at(index).blocks.at(writeblock).entry_access = c_accesses;
 		}
+		else{
+			memory_writes++; // write through
+		}
 		
 		return HIT;
 	}
-	else if(c_wr_miss_policy == WRITE_ALLOCATE){ // no wac means misses don't affect cache
+	else if(c_wr_hit_policy == WRITE_BACK && c_wr_miss_policy == WRITE_ALLOCATE){ // no wac means misses don't affect cache. 6:54
 		
 		if(next_free_block == (unsigned)UNDEFINED){
 			// eviction policy - find LRU set index with block (index)
@@ -292,6 +295,8 @@ access_type_t cache::write(address_t address){
 		cache_sets.at(index).blocks.at(next_free_block).entry_access = c_accesses;
 		
 	}
+
+	if(!found && !(c_wr_hit_policy == WRITE_BACK)) memory_writes++;
 	write_misses++;
 	return MISS;
 }
