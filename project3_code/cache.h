@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 using namespace std;
 
@@ -18,17 +19,59 @@ typedef enum {HIT, MISS} access_type_t;
 
 typedef long long address_t; //memory address type
 
+typedef struct{
+	unsigned index;
+	unsigned dirty;
+	unsigned tag;
+	unsigned entry_access;
+} block_t;
+
+typedef struct{
+	unsigned index;
+	vector<block_t> blocks;
+} set_t;
+
 class cache{
 
 	/* Add the data members required by your simulator's implementation here */
+	unsigned c_size;
+	unsigned c_associativity; // n
+	unsigned c_line_size;	// block size
+	write_policy_t c_wr_hit_policy;
+	write_policy_t c_wr_miss_policy;
+	unsigned c_hit_time;
+	unsigned c_miss_penalty;
+	unsigned c_address_width;
+	unsigned c_accesses; // increments on every run
 
 	/* number of memory accesses processed */
 	unsigned number_memory_accesses;
-
+	unsigned reads;
+	unsigned read_misses;
+	unsigned writes;
+	unsigned write_misses;
+	unsigned evictions;
+	unsigned memory_writes;
 	/* trace file input stream */	
 	ifstream stream;
 
+	unsigned c_num_sets;
+	unsigned c_num_blocks;
+	unsigned c_blocks_per_set;
 
+
+	unsigned tag_bits;
+
+	block_t null_block;
+	set_t null_set;
+
+	vector<set_t> cache_sets;
+
+	// the CACHE has array of SETS with length c_num_sets
+	// each SET has an array of BLOCKS with length ASSOCIATIVITY
+	// each BLOCK has {index, dirty, tag}
+	
+	// BLOCKS are assigned to SETS based on value of INDEX (calculated during R/W)
 public:
 
 	/* 
@@ -71,6 +114,9 @@ public:
 
 	//prints the metadata information (including "dirty" but, when applicable) for all valid cache entries  
 	void print_tag_array();
+
+
+	
 };
 
 #endif /*CACHE_H_*/
