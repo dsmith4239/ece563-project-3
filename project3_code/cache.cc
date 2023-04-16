@@ -83,7 +83,12 @@ void cache::print_configuration(){
 }
 
 cache::~cache(){
-	/* edit here */
+	cache_sets.clear();
+	stream.clear();
+	stream.close();
+	stream.seekg(0, ios::beg);
+	
+
 }
 
 void cache::load_trace(const char *filename){
@@ -95,7 +100,7 @@ void cache::run(unsigned num_entries){
    unsigned first_access = number_memory_accesses;
    string line;
    unsigned line_nr=0;
-
+   //fseek(,0,SEEK_SET);
    while (getline(stream,line)){
 
 	line_nr++;
@@ -171,8 +176,12 @@ access_type_t cache::read(address_t address){
 	set_t current_set = cache_sets.at(index);
 	bool found = false;
 	unsigned next_free_block = (unsigned)UNDEFINED;
+	unsigned readblock = (unsigned)UNDEFINED;
 	for(int blocknum = 0; blocknum < c_blocks_per_set; blocknum++){
-		if(current_set.blocks.at(blocknum).tag == tag) found = true;
+		if(current_set.blocks.at(blocknum).tag == tag) {
+			found = true;
+			readblock = blocknum;
+		}
 		// find first empty block for new cache data
 		if(next_free_block == (unsigned)UNDEFINED && current_set.blocks.at(blocknum).index == (unsigned)UNDEFINED){
 			next_free_block = blocknum;
@@ -181,18 +190,21 @@ access_type_t cache::read(address_t address){
 	}
 	// if present, return hit (and do something after?)
 	if(found) {
+		cache_sets.at(index).blocks.at(readblock).entry_access = c_accesses;
 		return HIT;
 	}
 	else{
 		if(next_free_block == (unsigned)UNDEFINED){
-			// eviction policy - find LRU of block
-			evict(0);
+			// eviction policy
+			// evict the block with value () out of all sets that has the
+			// lowest entry_access value
+			next_free_block = evict(index);
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 0;
 		cache_sets.at(index).blocks.at(next_free_block).index = index;
 		cache_sets.at(index).blocks.at(next_free_block).tag = tag;
-		cache_sets.at(index).blocks.at(next_free_block).entry_access = 
+		cache_sets.at(index).blocks.at(next_free_block).entry_access = c_accesses;
 		return MISS;
 	}
 }
@@ -246,19 +258,21 @@ access_type_t cache::write(address_t address){
 	}
 	// if present, return hit (and do something after?)
 	if(found) {
-		// mark as dirty if not already
+		// mark as dirty if not already and refresh entry access
 		cache_sets.at(index).blocks.at(writeblock).dirty = 1;
+		cache_sets.at(index).blocks.at(writeblock).entry_access = c_accesses;
 		return HIT;
 	}
 	else{
 		if(next_free_block == (unsigned)UNDEFINED){
-			// eviction policy - find LRU of block
-			evict(0);
+			// eviction policy - find LRU set index with block (index)
+			next_free_block = evict(index);
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 1;	// dirty == 1 only if write back
 		cache_sets.at(index).blocks.at(next_free_block).index = index;
 		cache_sets.at(index).blocks.at(next_free_block).tag = tag;
+		cache_sets.at(index).blocks.at(next_free_block).entry_access = c_accesses;
 		return MISS;
 	}
 }
@@ -269,24 +283,52 @@ void cache::print_tag_array(){
 	for(int bn = 0; bn < c_blocks_per_set; bn++){
 	// for each set, see if that block tag != undefined and print if it is
 		cout << "BLOCKS " << bn << endl;
-		cout << setfill(' ') << setw(7) << "index" << setw(6) << "dirty" << setw(4+tag_bits/4) << "tag" << endl; 
-		for(int sn = 0; sn < c_num_sets; sn++){
-			block_t current = cache_sets.at(sn).blocks.at(bn);
-			if(current.tag != (unsigned)UNDEFINED){
-				cout << current.index << " " << current.dirty << " " << current.tag << endl;
+
+
+		// writeback
+
+		if(c_wr_hit_policy == WRITE_BACK){
+			cout << setfill(' ') << setw(7) << "index" << setw(6) << "dirty" << setw(4+tag_bits/4) << "tag" << endl; 
+			for(int sn = 0; sn < c_num_sets; sn++){
+				block_t current = cache_sets.at(sn).blocks.at(bn);
+				if(current.tag != (unsigned)UNDEFINED){
+					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
+					cout << setfill(' ') << setw(7) << current.index << setw(6) << current.dirty << setw(4+tag_bits/4) << "0x" + (current.tag) << endl; 
+				}
 			}
 		}
+		else if(c_wr_hit_policy == WRITE_THROUGH){
+			cout << setfill(' ') << setw(7) << "index" << setw(4+tag_bits/4) << "tag" << endl; 
+			for(int sn = 0; sn < c_num_sets; sn++){
+				block_t current = cache_sets.at(sn).blocks.at(bn);
+				if(current.tag != (unsigned)UNDEFINED){
+					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
+					cout << setfill(' ') << setw(7) << current.index << setw(4+tag_bits/4) << current.tag << endl; 
+				}
+			}
+		}
+
+
+
+
+
+
+
+
 	}
 }
 
-unsigned cache::evict(unsigned block_index){
-	// find last recently used set with block block_index
-	// (set with lowest entry_access)
+unsigned cache::evict(unsigned index){
+	// find last recently used block in set (index)
+	// with lowest entry_access
 	unsigned access_number = (unsigned)UNDEFINED;
-
-	for(int setnum = 0; setnum < c_num_sets; setnum++){
-		if(cache_sets.at(setnum).blocks.at(block_index).
+	unsigned LRU = (unsigned)UNDEFINED;
+	for(int blocknum = 0; blocknum < c_blocks_per_set; blocknum++){
+		if(cache_sets.at(index).blocks.at(blocknum).entry_access < access_number){
+			LRU = blocknum;
+			access_number = cache_sets.at(index).blocks.at(blocknum).entry_access;
+		}
 	}
 
-	return 0;
+	return LRU; // replaces block number
 }

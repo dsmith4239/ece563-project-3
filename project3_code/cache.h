@@ -72,6 +72,7 @@ class cache{
 	// each BLOCK has {index, dirty, tag}
 	
 	// BLOCKS are assigned to SETS based on value of INDEX (calculated during R/W)
+
 public:
 
 	/* 
