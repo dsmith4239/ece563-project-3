@@ -61,13 +61,13 @@ Assume that the three matrices are stored contiguously in memory starting at add
 The trace should contain all memory accesses to matrices a, b and c. You can ignore variables i, j, k and parameter n.
 You can ignore the initialization of matrix c (i.e., assume it is already initialized to all 0s.
 
-   for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-	 for (int k = 0; k < n; k++) {
-            c[i,j] = a[i,k] * b[k,j] + c[i,j];
-         }
-      }
-   }
+for (int i = 0; i < n; i++) {
+  for (int j = 0; j < n; j++) {
+    for (int k = 0; k < n; k++) {
+      c[i,j] = a[i,k] * b[k,j] + c[i,j];
+    }
+  }
+}
 
 The trace should be written to standard output, and it should follow the format required by your cache simulator.
 */
