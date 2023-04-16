@@ -173,7 +173,7 @@ access_type_t cache::read(address_t address){
 
 	unsigned index = (address & index_mask) >> blockoffset_width;
 	unsigned blockoffset = (address & bo_mask);
-	unsigned tag = (address & tag_mask) >> (blockoffset_width + index_width);
+	address_t tag = (address & tag_mask) >> (blockoffset_width + index_width);
 
 	// -----------------------------------------------------
 
@@ -248,7 +248,7 @@ access_type_t cache::write(address_t address){
 
 	unsigned index = (address & index_mask) >> blockoffset_width;
 	unsigned blockoffset = (address & bo_mask);
-	unsigned tag = (address & tag_mask) >> (blockoffset_width + index_width);
+	address_t tag = (address & tag_mask) >> (blockoffset_width + index_width);
 	
 	// check cache at set(index) for block	
 	set_t current_set = cache_sets.at(index);
@@ -310,7 +310,7 @@ void cache::print_tag_array(){
 			cout << setfill(' ') << setw(7) << "index" << setw(6) << "dirty" << setw(4+tag_bits/4) << "tag" << endl; 
 			for(int sn = 0; sn < c_num_sets; sn++){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
-				if(current.tag != (unsigned)UNDEFINED){
+				if(current.tag != UNDEFINED){
 					//stringstream tag << "0x" << hex << current.tag;
 
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
@@ -322,7 +322,7 @@ void cache::print_tag_array(){
 			cout << setfill(' ') << setw(7) << "index" << setw(4+tag_bits/4) << "tag" << endl; 
 			for(int sn = 0; sn < c_num_sets; sn++){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
-				if(current.tag != (unsigned)UNDEFINED){					
+				if(current.tag != UNDEFINED){					
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
 					cout << setfill(' ') << setw(7) << dec << current.index << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}

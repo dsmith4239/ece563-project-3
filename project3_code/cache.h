@@ -22,7 +22,7 @@ typedef long long address_t; //memory address type
 typedef struct{
 	unsigned index;
 	unsigned dirty;
-	unsigned tag;
+	address_t tag;
 	unsigned entry_access;
 } block_t;
 
