@@ -43,7 +43,6 @@ cache::cache(unsigned size,
 
 	tag_bits = UNDEFINED;
 
-
 	null_block.dirty = UNDEFINED;
 	null_block.index = UNDEFINED;
 	null_block.tag = UNDEFINED;
@@ -85,10 +84,10 @@ void cache::print_configuration(){
 
 cache::~cache(){
 	cache_sets.clear();
+
 	stream.clear();
+	stream.seekg(0,std::ios::beg);
 	stream.close();
-	stream.seekg(0, ios::beg);
-	
 
 }
 
@@ -101,7 +100,7 @@ void cache::run(unsigned num_entries){
    unsigned first_access = number_memory_accesses;
    string line;
    unsigned line_nr=0;
-   //fseek(,0,SEEK_SET);
+   
    while (getline(stream,line)){
 
 	line_nr++;
@@ -112,19 +111,12 @@ void cache::run(unsigned num_entries){
 	char *addr = strtok (NULL, " ");
 	address_t address = strtoul(addr, NULL, 16);
 
-/* added */
-	cout << "ADDRESS:: @=0x" << hex << address << endl;
+/* debug */
+	//cout << "ADDRESS:: @=0x" << hex << address << endl;
 
-	/* 
-		edit here:
-		insert the code to process read and write operations
-	   	using the read() and write() functions below
-
-	*/
 	c_accesses++;
 	if(*op == 'w') write(address);
 	else if(*op == 'r') read(address);
-
 
 	number_memory_accesses++;
 	if (num_entries!=0 && (number_memory_accesses-first_access)==num_entries)
@@ -211,7 +203,9 @@ access_type_t cache::read(address_t address){
 			// evict the block with value () out of all sets that has the
 			// lowest entry_access value
 			next_free_block = evict(index);
-			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1) memory_writes++;
+			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1) {
+				memory_writes++;
+			}
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 0;
@@ -224,6 +218,7 @@ access_type_t cache::read(address_t address){
 
 access_type_t cache::write(address_t address){
     writes++;
+	if(c_wr_miss_policy == NO_WRITE_ALLOCATE && c_wr_hit_policy == WRITE_THROUGH) memory_writes++;
 	// split address into tag, index, block offset
 	unsigned index_width = log2(c_num_sets);
 	unsigned blockoffset_width = log2(c_line_size);
@@ -272,24 +267,31 @@ access_type_t cache::write(address_t address){
 	// if present, return hit (and do something after?)
 	if(found) {
 		// mark as dirty if not already and refresh entry access
-		cache_sets.at(index).blocks.at(writeblock).dirty = 1;
-		cache_sets.at(index).blocks.at(writeblock).entry_access = c_accesses;
+		if(c_wr_hit_policy == WRITE_BACK){
+			cache_sets.at(index).blocks.at(writeblock).dirty = 1;
+			cache_sets.at(index).blocks.at(writeblock).entry_access = c_accesses;
+		}
+		
 		return HIT;
 	}
-	else{
-		write_misses++;
+	else if(c_wr_miss_policy == WRITE_ALLOCATE){ // no wac means misses don't affect cache
+		
 		if(next_free_block == (unsigned)UNDEFINED){
 			// eviction policy - find LRU set index with block (index)
 			next_free_block = evict(index);
-			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1) memory_writes++;
+			if(cache_sets.at(index).blocks.at(next_free_block).dirty == 1){
+				memory_writes++;
+			}
 		}
 
 		cache_sets.at(index).blocks.at(next_free_block).dirty = 1;	// dirty == 1 only if write back
 		cache_sets.at(index).blocks.at(next_free_block).index = index;
 		cache_sets.at(index).blocks.at(next_free_block).tag = tag;
 		cache_sets.at(index).blocks.at(next_free_block).entry_access = c_accesses;
-		return MISS;
+		
 	}
+	write_misses++;
+	return MISS;
 }
 
 void cache::print_tag_array(){
@@ -318,11 +320,9 @@ void cache::print_tag_array(){
 			cout << setfill(' ') << setw(7) << "index" << setw(4+tag_bits/4) << "tag" << endl; 
 			for(int sn = 0; sn < c_num_sets; sn++){
 				block_t current = cache_sets.at(sn).blocks.at(bn);
-				if(current.tag != (unsigned)UNDEFINED){
-					string hexadec = "0x" + to_string(current.tag);
-					
+				if(current.tag != (unsigned)UNDEFINED){					
 					//cout << current.index << " " << current.dirty << " " << current.tag << endl;				
-					cout << setfill(' ') << setw(7) << current.index << "0x" << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
+					cout << setfill(' ') << setw(7) << current.index << setw(4+tag_bits/4) << "0x" << hex << current.tag << endl; 
 				}
 			}
 		}
