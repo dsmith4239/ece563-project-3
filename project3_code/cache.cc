@@ -279,7 +279,7 @@ access_type_t cache::write(address_t address){
 		
 		return HIT;
 	}
-	else if(c_wr_hit_policy == WRITE_BACK && c_wr_miss_policy == WRITE_ALLOCATE){ // no wac means misses don't affect cache. 6:54
+	else if(c_wr_miss_policy == WRITE_ALLOCATE){ // no wac means misses don't affect cache. 6:54
 		
 		if(next_free_block == (unsigned)UNDEFINED){
 			// eviction policy - find LRU set index with block (index)
