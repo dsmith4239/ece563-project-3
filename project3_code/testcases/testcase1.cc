@@ -1,4 +1,4 @@
-#include "../cache.cc"//#include "cache.h"
+#include "cache.h"
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
@@ -26,7 +26,7 @@ int main(int argc, char **argv){
 	mycache->print_configuration();
 	cout << endl;
 
-	mycache->load_trace("C:/Users/Smith/Desktop/NCSU/spring 23/ECE563/project/ece563-project-3/project3_code/traces/GCC.t");
+	mycache->load_trace("traces/GCC.t");
 
 	cout << endl << "Run 50 memory accesses..." << endl;
 	mycache->run(50);
