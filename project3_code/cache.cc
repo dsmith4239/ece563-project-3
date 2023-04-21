@@ -111,7 +111,7 @@ void cache::run(unsigned num_entries){
 	char *addr = strtok (NULL, " ");
 	address_t address = strtoull(addr, NULL, 16); 
 	// provided code doesn't work. 
-	// address is > 4 bytes :| bro
+	// address is > 4 bytes
 
 /* debug */
 	//cout << "ADDRESS:: @=0x" << hex << address << endl;
