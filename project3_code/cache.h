@@ -117,7 +117,7 @@ public:
 	//prints the metadata information (including "dirty" but, when applicable) for all valid cache entries  
 	void print_tag_array();
 
-
+	void print_to_file(string path);
 	
 };
 

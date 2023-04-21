@@ -3,3 +3,8 @@ project3_code/traces/MCF.t
 project3_code/traces/LBM.t
 project3_code/traces/GCC.t
 project3_code/traces/._LBM.t
+project3_code/traces/bmult_n128_b32.t
+project3_code/traces/bmult_n128_b64.t
+project3_code/traces/bmult_n128_b128.t
+project3_code/traces/bmult_n128_b256.t
+project3_code/traces/mult_n128.t

@@ -143,6 +143,32 @@ void cache::print_statistics(){
 	maccesstime = c_hit_time + ((float)c_miss_penalty * (read_misses + write_misses) / number_memory_accesses);
 	cout << "average memory access time " << maccesstime << endl;	
 }
+ofstream outfile;
+void cache::print_to_file(string path){
+
+	outfile.open(path.c_str(),fstream::out);
+	if(!outfile.is_open()){
+		cout << "file error";
+		return;
+	}
+	outfile << "STATISTICS" << endl;
+
+	number_memory_accesses = c_accesses;
+	outfile << "memory accesses = " << dec << number_memory_accesses << endl;
+
+	outfile << "read = " << reads << endl;
+	outfile << "read misses = " << read_misses << endl;
+	outfile << "write = " << writes << endl;
+	outfile << "write misses = " << write_misses << endl;
+	outfile << "evictions = " << evictions << endl;
+	outfile << "memory writes = " << memory_writes << endl;
+
+	// Avg. memory access time = Hit time + Miss rate × Miss Penalty 
+	maccesstime = c_hit_time + ((float)c_miss_penalty * (read_misses + write_misses) / number_memory_accesses);
+	outfile << "average memory access time " << maccesstime << endl;	
+
+	outfile.close();
+}
 
 access_type_t cache::read(address_t address){
 	reads++;

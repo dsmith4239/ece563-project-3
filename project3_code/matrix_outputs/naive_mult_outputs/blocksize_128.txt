@@ -1,0 +1,9 @@
+STATISTICS
+memory accesses = 8388608
+read = 6291456
+read misses = 2163196
+write = 2097152
+write misses = 0
+evictions = 2163068
+memory writes = 511
+average memory access time 30.7873
